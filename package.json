@@ -1,0 +1,26 @@
+{
+  "name": "fullstack-auth-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready full-stack authentication system with React 18, Node.js, Express, TypeScript, and Prisma",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace=apps/api run dev",
+    "dev:web": "npm --workspace=apps/web run dev",
+    "build:api": "npm --workspace=apps/api run build",
+    "build:web": "npm --workspace=apps/web run build",
+    "build": "npm run build:api && npm run build:web",
+    "test:api": "npm --workspace=apps/api run test",
+    "test:web": "npm --workspace=apps/web run test",
+    "test": "npm run test:api && npm run test:web",
+    "db:generate": "npm --workspace=apps/api run db:generate",
+    "db:push": "npm --workspace=apps/api run db:push",
+    "db:migrate": "npm --workspace=apps/api run db:migrate",
+    "db:seed": "npm --workspace=apps/api run db:seed"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}
