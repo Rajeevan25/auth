@@ -27,10 +27,10 @@ export const DashboardNavbar: React.FC = () => {
           </div>
           <div>
             <span className="font-bold text-slate-900 dark:text-white tracking-tight text-lg">
-              SecureAuth
+              PeopleHub HRM
             </span>
             <span className="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-              Authenticated
+              HR Portal
             </span>
           </div>
         </div>

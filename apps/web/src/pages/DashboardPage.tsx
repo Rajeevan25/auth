@@ -41,13 +41,13 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/20">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              Active Session Verified
+              HR Workspace Active
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Welcome back, {user?.name || 'Explorer'}!
+              Welcome back, {user?.name || 'Team Member'}!
             </h1>
             <p className="text-brand-100 text-sm max-w-xl">
-              You are signed into the protected area. Your session is safeguarded with short-lived JWT access tokens and rotating httpOnly refresh cookies.
+              Manage your team, track attendance, and handle leave requests from your central HR workspace.
             </p>
           </div>
           <button
@@ -57,7 +57,7 @@ export const DashboardPage: React.FC = () => {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-brand-900 text-xs font-bold hover:bg-brand-50 shadow-sm transition-all focus-ring shrink-0"
           >
             {isTesting ? <LoadingSpinner size="sm" /> : <RefreshCw className="w-3.5 h-3.5 text-brand-700" />}
-            <span>Test /api/auth/me Interceptor</span>
+            <span>Refresh Employee Profile</span>
           </button>
         </div>
 
@@ -65,7 +65,7 @@ export const DashboardPage: React.FC = () => {
         {testResult && (
           <div className="p-4 rounded-xl bg-slate-900 text-emerald-400 font-mono text-xs overflow-x-auto border border-slate-800 shadow-md">
             <div className="text-slate-400 font-sans mb-1 text-[11px] font-semibold">
-              Live Interceptor API Response:
+              Employee Profile API Response:
             </div>
             <pre>{testResult}</pre>
           </div>
@@ -80,7 +80,7 @@ export const DashboardPage: React.FC = () => {
                 <User className="w-5 h-5" />
               </div>
               <h2 className="font-bold text-base text-slate-900 dark:text-white">
-                User Profile
+                Employee Profile
               </h2>
             </div>
             <dl className="space-y-3 text-xs">
@@ -93,62 +93,62 @@ export const DashboardPage: React.FC = () => {
                 <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">{user?.email}</dd>
               </div>
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">User ID (UUID)</dt>
+                <dt className="text-slate-500 dark:text-slate-400">Employee ID</dt>
                 <dd className="font-mono text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 truncate">{user?.id}</dd>
               </div>
             </dl>
           </div>
 
-          {/* Card 2: Security & Tokens */}
+          {/* Card 2: Workforce Status */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <h2 className="font-bold text-base text-slate-900 dark:text-white">
-                Security Posture
+                Workforce Status
               </h2>
             </div>
             <dl className="space-y-3 text-xs">
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Access Token Lifetime</dt>
-                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">15 Minutes (In-Memory / Cookie)</dd>
+                <dt className="text-slate-500 dark:text-slate-400">Shift Schedule</dt>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">9:00 AM – 5:00 PM</dd>
               </div>
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Refresh Token Policy</dt>
-                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">Rotating SHA-256 (HttpOnly Cookie)</dd>
+                <dt className="text-slate-500 dark:text-slate-400">Department</dt>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">Unassigned</dd>
               </div>
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Account Standing</dt>
+                <dt className="text-slate-500 dark:text-slate-400">Employment Status</dt>
                 <dd className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                  <CheckCircle className="w-3.5 h-3.5" /> Normal (0 Lockouts)
+                  <CheckCircle className="w-3.5 h-3.5" /> Active
                 </dd>
               </div>
             </dl>
           </div>
 
-          {/* Card 3: Account Metadata */}
+          {/* Card 3: Employment Details */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
                 <Calendar className="w-5 h-5" />
               </div>
               <h2 className="font-bold text-base text-slate-900 dark:text-white">
-                Account Metadata
+                Employment Details
               </h2>
             </div>
             <dl className="space-y-3 text-xs">
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Registration Date</dt>
+                <dt className="text-slate-500 dark:text-slate-400">Joined Date</dt>
                 <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">{formattedDate}</dd>
               </div>
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Database Engine</dt>
-                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">PostgreSQL + Prisma ORM</dd>
+                <dt className="text-slate-500 dark:text-slate-400">Leave Balance</dt>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">15 Days Remaining</dd>
               </div>
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Environment</dt>
-                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">Monorepo Production Scaffold</dd>
+                <dt className="text-slate-500 dark:text-slate-400">Work Location</dt>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">Headquarters / Remote</dd>
               </div>
             </dl>
           </div>
@@ -162,10 +162,10 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div>
               <h2 className="font-bold text-lg text-slate-900 dark:text-white">
-                How This Full-Stack Auth Pipeline Works
+                HRM Modules & Quick Guide
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Clean layered structure ready for your application features
+                Core human resource workflows available in your workspace
               </p>
             </div>
           </div>
@@ -174,40 +174,40 @@ export const DashboardPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
               <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Lock className="w-4 h-4 text-brand-500" />
-                1. Dual Token Lifecycle
+                1. Employee Directory
               </div>
               <p>
-                When you log in, the API issues a 15-minute JWT access token and a 7-day cryptographically random refresh token. Both are set in <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite</code> cookies to eliminate XSS token theft.
+                Maintain centralized employee profiles, job titles, reporting managers, and department assignments in one searchable directory.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
               <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-brand-500" />
-                2. Axios Silent Refresh Interceptor
+                2. Attendance & Time Tracking
               </div>
               <p>
-                If an authenticated API call returns 401, Axios intercepts the error, calls <code>/api/auth/refresh</code> in the background, swaps the expired token, and replays the original request seamlessly.
+                Track daily clock-in and clock-out logs, shift schedules, and attendance summaries across teams.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
               <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <Key className="w-4 h-4 text-brand-500" />
-                3. Rotation & Reuse Defense
+                3. Leave & Time-Off Management
               </div>
               <p>
-                Every refresh operation revokes the previous refresh token and generates a new one. If an already revoked token is used, the system detects a token-theft replay and immediately revokes all sessions for that user.
+                Submit leave requests, monitor remaining annual and sick leave balances, and streamline manager approvals.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
               <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-brand-500" />
-                4. Brute-Force & Enumeration Protection
+                4. Role-Based Access Control
               </div>
               <p>
-                5 consecutive failed password attempts trigger an automatic 15-minute security lockout. Login and forgot-password flows use dummy bcrypt hashing and uniform responses to prevent user enumeration.
+                Protect sensitive HR and payroll data with role-based permissions for Admins, HR Managers, Team Leads, and Employees.
               </p>
             </div>
           </div>
