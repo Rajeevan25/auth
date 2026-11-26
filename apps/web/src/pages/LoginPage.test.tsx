@@ -9,7 +9,6 @@ import { ThemeContext } from '../context/ThemeContext';
 const mockLogin = vi.fn();
 const mockLogout = vi.fn();
 const mockCheckAuth = vi.fn();
-const mockRegister = vi.fn();
 const mockToggleTheme = vi.fn();
 const mockSetTheme = vi.fn();
 
@@ -24,7 +23,6 @@ const renderLoginPage = () => {
           login: mockLogin,
           logout: mockLogout,
           checkAuth: mockCheckAuth,
-          register: mockRegister,
         }}
       >
         <BrowserRouter>

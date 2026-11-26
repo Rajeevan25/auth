@@ -14,18 +14,11 @@ export interface LoginParams {
   rememberMe?: boolean;
 }
 
-export interface RegisterParams {
-  email: string;
-  name: string;
-  password: string;
-}
-
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (credentials: LoginParams) => Promise<User>;
-  register: (data: RegisterParams) => Promise<User>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -65,16 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return loggedInUser;
   };
 
-  const register = async (data: RegisterParams): Promise<User> => {
-    const response = await apiClient.post<{ success: boolean; user: User; message: string }>(
-      '/auth/register',
-      data,
-    );
-    const registeredUser = response.data.user;
-    setUser(registeredUser);
-    return registeredUser;
-  };
-
   const logout = async (): Promise<void> => {
     try {
       await apiClient.post('/auth/logout');
@@ -92,7 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: Boolean(user),
         isLoading,
         login,
-        register,
         logout,
         checkAuth,
       }}

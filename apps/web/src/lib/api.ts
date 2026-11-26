@@ -42,7 +42,6 @@ apiClient.interceptors.response.use(
     const url = originalRequest.url || '';
     const isAuthRoute =
       url.includes('/auth/login') ||
-      url.includes('/auth/register') ||
       url.includes('/auth/refresh') ||
       url.includes('/auth/forgot-password') ||
       url.includes('/auth/reset-password');

@@ -17,22 +17,6 @@ import { AuthGuard, AuthenticatedRequest } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  async register(
-    @Body() body: { email: string; name: string; password: string },
-    @Res({ passthrough: true }) res: FastifyReply,
-  ) {
-    const result = await authService.register(body);
-    tokenService.setAuthCookies(res as any, result.tokens);
-
-    return {
-      success: true,
-      message: 'Account created successfully',
-      user: result.user,
-    };
-  }
-
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(

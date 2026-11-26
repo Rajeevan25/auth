@@ -11,7 +11,6 @@ import { ErrorBanner } from '../components/common/ErrorBanner';
 import { CapsLockWarning } from '../components/common/CapsLockWarning';
 import { CountdownTimer } from '../components/common/CountdownTimer';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import { SocialLoginButtons } from '../components/common/SocialLoginButtons';
 
 // Schema with real-time validation rules
 const loginSchema = z.object({
@@ -128,17 +127,6 @@ export const LoginPage: React.FC = () => {
             />
           </div>
         )}
-
-        {/* Social Login Buttons */}
-        <SocialLoginButtons />
-
-        {/* Divider */}
-        <div className="relative flex items-center justify-center">
-          <div className="w-full border-t border-slate-200 dark:border-slate-800" />
-          <span className="absolute bg-white dark:bg-slate-900 px-3 text-xs uppercase tracking-wider text-slate-400 font-medium">
-            or continue with email
-          </span>
-        </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
@@ -276,17 +264,6 @@ export const LoginPage: React.FC = () => {
           <p className="font-mono mt-0.5">Email: demo@example.com</p>
           <p className="font-mono">Password: Password123</p>
         </div> */}
-
-        {/* Sign up link */}
-        <p className="text-center text-xs text-slate-600 dark:text-slate-400">
-          Don&apos;t have an account?{' '}
-          <Link
-            to="/register"
-            className="font-semibold text-brand-600 dark:text-brand-400 hover:underline focus-ring rounded"
-          >
-            Create an account
-          </Link>
-        </p>
       </div>
     </AuthLayout>
   );

@@ -3,23 +3,6 @@ import { authService } from '../services/auth.service';
 import { tokenService, REFRESH_COOKIE_NAME } from '../services/token.service';
 
 export class AuthController {
-  async register(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { email, name, password } = req.body;
-      const result = await authService.register({ email, name, password });
-
-      tokenService.setAuthCookies(res, result.tokens);
-
-      res.status(201).json({
-        success: true,
-        message: 'Account created successfully',
-        user: result.user,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { email, password, rememberMe } = req.body;
