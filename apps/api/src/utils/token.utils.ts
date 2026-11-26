@@ -6,6 +6,8 @@ export interface AccessTokenPayload {
   userId: string;
   email: string;
   name: string;
+  role: string;
+  designation?: string; // only set when role = EMPLOYEE
 }
 
 export interface RefreshTokenPayload {

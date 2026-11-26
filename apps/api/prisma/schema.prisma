@@ -7,11 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Role: controls system access ────────────────────────────────────────────
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  HR_MANAGER
+  HR_EXECUTIVE
+  RECRUITER
+  FINANCE_MANAGER
+  FINANCE_EXECUTIVE
+  MANAGER
+  TEAM_LEAD
+  EMPLOYEE
+}
+
+// ─── Designation: sub-level only for EMPLOYEE role ───────────────────────────
+enum EmployeeDesignation {
+  SENIOR      // 5+ years experience
+  JUNIOR      // 1–4 years experience
+  ASSOCIATE   // 0–1 year (fresher)
+  TRAINEE     // Intern / probation
+}
+
 model User {
   id             String               @id @default(uuid())
   email          String               @unique
   passwordHash   String
   name           String
+  role           UserRole             @default(EMPLOYEE)
+  designation    EmployeeDesignation? // null for non-EMPLOYEE roles
+  department     String?              // e.g. "Engineering", "HR", "Finance"
+  managerId      String?              // ID of this user's direct manager
+  isActive       Boolean              @default(true)
   failedAttempts Int                  @default(0)
   lockedUntil    DateTime?
   createdAt      DateTime             @default(now())

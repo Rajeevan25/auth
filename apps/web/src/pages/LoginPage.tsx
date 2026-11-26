@@ -12,6 +12,24 @@ import { CapsLockWarning } from '../components/common/CapsLockWarning';
 import { CountdownTimer } from '../components/common/CountdownTimer';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
+// ─── Role → default dashboard path ───────────────────────────────────────────
+const ROLE_REDIRECT: Record<string, string> = {
+  SUPER_ADMIN:       '/super-admin/dashboard',
+  ADMIN:             '/admin/dashboard',
+  HR_MANAGER:        '/hr/dashboard',
+  HR_EXECUTIVE:      '/hr/employees',
+  RECRUITER:         '/hr/recruitment',
+  FINANCE_MANAGER:   '/finance/dashboard',
+  FINANCE_EXECUTIVE: '/finance/payroll',
+  MANAGER:           '/manager/team',
+  TEAM_LEAD:         '/team-lead/tasks',
+  EMPLOYEE:          '/employee/dashboard',
+};
+
+function getRoleRedirect(role: string): string {
+  return ROLE_REDIRECT[role] ?? '/dashboard';
+}
+
 // Schema with real-time validation rules
 const loginSchema = z.object({
   email: z
@@ -62,9 +80,11 @@ export const LoginPage: React.FC = () => {
     setIsShaking(false);
 
     try {
-      await login(data);
-      // Redirect to return path if navigated from protected route
-      const destination = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/dashboard';
+      const loggedInUser = await login(data);
+      // If user was redirected from a protected route → go back there
+      // Otherwise → go to their role-specific default dashboard
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+      const destination = from || getRoleRedirect(loggedInUser.role);
       navigate(destination, { replace: true });
     } catch (err) {
       setIsShaking(true);

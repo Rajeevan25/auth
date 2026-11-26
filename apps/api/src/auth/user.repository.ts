@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, UserRole, EmployeeDesignation } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -22,12 +22,20 @@ export class UserRepository {
     email: string;
     name: string;
     passwordHash: string;
+    role?: UserRole;
+    designation?: EmployeeDesignation;
+    department?: string;
+    managerId?: string;
   }): Promise<User> {
     return this.prisma.user.create({
       data: {
         email: data.email.toLowerCase().trim(),
         name: data.name.trim(),
         passwordHash: data.passwordHash,
+        role: data.role ?? UserRole.EMPLOYEE,
+        designation: data.designation ?? null,
+        department: data.department ?? null,
+        managerId: data.managerId ?? null,
         failedAttempts: 0,
         lockedUntil: null,
       },

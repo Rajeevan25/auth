@@ -22,7 +22,7 @@ export class TokenRepository {
 
   async findRefreshTokenByHash(
     tokenHash: string,
-  ): Promise<(RefreshToken & { user: { id: string; email: string; name: string } }) | null> {
+  ): Promise<(RefreshToken & { user: { id: string; email: string; name: string; role: string; designation: string | null } }) | null> {
     return this.prisma.refreshToken.findUnique({
       where: { tokenHash },
       include: {
@@ -31,6 +31,8 @@ export class TokenRepository {
             id: true,
             email: true,
             name: true,
+            role: true,
+            designation: true,
           },
         },
       },

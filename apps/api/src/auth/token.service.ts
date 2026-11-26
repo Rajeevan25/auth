@@ -46,13 +46,15 @@ export class TokenService {
   }
 
   async issueTokens(
-    user: { id: string; email: string; name: string },
+    user: { id: string; email: string; name: string; role: string; designation?: string | null },
     rememberMe = false,
   ): Promise<IssuedTokens> {
     const accessPayload: AccessTokenPayload = {
       userId: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
+      ...(user.designation ? { designation: user.designation } : {}),
     };
     const accessToken = signAccessToken(accessPayload);
 
@@ -97,7 +99,7 @@ export class TokenService {
    * Enforces single-use rotation and reuse detection.
    */
   async rotateRefreshToken(rawRefreshToken: string): Promise<{
-    user: { id: string; email: string; name: string };
+    user: { id: string; email: string; name: string; role: string; designation?: string | null };
     newTokens: IssuedTokens;
   }> {
     if (!rawRefreshToken) {

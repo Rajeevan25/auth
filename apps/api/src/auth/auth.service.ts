@@ -75,7 +75,13 @@ export class AuthService {
     }
 
     const tokens = await this.tokenService.issueTokens(
-      { id: user.id, email: user.email, name: user.name },
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        designation: user.designation ?? undefined,
+      },
       Boolean(data.rememberMe),
     );
 
@@ -84,6 +90,9 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        designation: user.designation ?? null,
+        department: user.department ?? null,
         createdAt: user.createdAt,
       },
       tokens,
@@ -117,6 +126,9 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
+      designation: user.designation ?? null,
+      department: user.department ?? null,
       createdAt: user.createdAt,
     };
   }

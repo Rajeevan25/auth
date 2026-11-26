@@ -5,6 +5,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  role: string;
+  designation: string | null; // only set when role = 'EMPLOYEE'
+  department: string | null;
   createdAt: string;
 }
 
