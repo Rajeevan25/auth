@@ -30,35 +30,6 @@ export class AuthService {
     private readonly tokenRepository: TokenRepository,
   ) {}
 
-  async register(data: { email: string; name: string; password: string }) {
-    const existing = await this.userRepository.findByEmail(data.email);
-    if (existing) {
-      throw new ConflictError('An account with this email address already exists');
-    }
-
-    const passwordHash = await hashPassword(data.password);
-    const user = await this.userRepository.createUser({
-      email: data.email,
-      name: data.name,
-      passwordHash,
-    });
-
-    const tokens = await this.tokenService.issueTokens(
-      { id: user.id, email: user.email, name: user.name },
-      false,
-    );
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        createdAt: user.createdAt,
-      },
-      tokens,
-    };
-  }
-
   async login(data: { email: string; password: string; rememberMe?: boolean }) {
     const user = await this.userRepository.findByEmail(data.email);
 

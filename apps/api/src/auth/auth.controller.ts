@@ -14,6 +14,10 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service';
 import { TokenService, REFRESH_COOKIE_NAME } from './token.service';
 import { AuthGuard, AuthenticatedRequest } from './auth.guard';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { loginSchema, LoginDto } from './dto/login.dto';
+import { forgotPasswordSchema, ForgotPasswordDto } from './dto/forgot-password.dto';
+import { resetPasswordSchema, ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -25,13 +29,13 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
-    @Body() body: { email: string; password: string; rememberMe?: boolean },
+    @Body(new ZodValidationPipe(loginSchema)) body: LoginDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
     const result = await this.authService.login({
       email: body.email,
       password: body.password,
-      rememberMe: body.rememberMe ?? false,
+      rememberMe: body.rememberMe,
     });
     this.tokenService.setAuthCookies(res, result.tokens);
 
@@ -96,7 +100,9 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body() body: { email: string }) {
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordDto,
+  ) {
     const result = await this.authService.forgotPassword(body.email);
     return {
       success: true,
@@ -106,7 +112,9 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  async resetPassword(@Body() body: { token: string; password: string }) {
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema)) body: ResetPasswordDto,
+  ) {
     const result = await this.authService.resetPassword(body.token, body.password);
     return {
       success: true,

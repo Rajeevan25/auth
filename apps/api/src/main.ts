@@ -6,6 +6,8 @@ import {
 import fastifyCookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import { AppModule } from './app.module';
+import { AppErrorFilter } from './common/filters/app-error.filter';
+import { env } from './config/env.config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -17,14 +19,14 @@ async function bootstrap() {
   await app.register(fastifyCookie);
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: env.FRONTEND_URL,
     credentials: true,
   });
 
   app.setGlobalPrefix('api');
+  app.useGlobalFilters(new AppErrorFilter());
 
-  const port = Number(process.env.PORT) || 4000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(env.PORT, '0.0.0.0');
 }
 
 bootstrap();
