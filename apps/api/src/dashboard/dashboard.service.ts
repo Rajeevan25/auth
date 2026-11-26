@@ -3,33 +3,41 @@ import { UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessTokenPayload } from '../utils/token.utils';
 
-const LEAVE_QUOTA_BY_DESIGNATION: Record<string, number> = {
-  SENIOR: 24,
-  JUNIOR: 18,
-  ASSOCIATE: 15,
-  TRAINEE: 6,
-};
-
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async getDepartmentBreakdown() {
+    const [grouped, departments] = await Promise.all([
+      this.prisma.user.groupBy({
+        by: ['departmentId'],
+        where: { departmentId: { not: null } },
+        _count: { _all: true },
+      }),
+      this.prisma.department.findMany({
+        select: { id: true, name: true },
+      }),
+    ]);
+
+    const nameById = new Map(departments.map((d) => [d.id, d.name]));
+    return grouped.map((g) => ({
+      department: (g.departmentId ? nameById.get(g.departmentId) : null) ?? 'Unassigned',
+      count: g._count._all,
+    }));
+  }
 
   async getSummaryForUser(user: AccessTokenPayload) {
     const now = new Date();
 
     if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN) {
-      const [totalUsers, activeUsers, lockedAccounts, traineeCount, byRole, byDepartment] =
+      const [totalUsers, activeUsers, lockedAccounts, traineeCount, byRole, departmentBreakdown] =
         await Promise.all([
           this.prisma.user.count(),
           this.prisma.user.count({ where: { isActive: true } }),
           this.prisma.user.count({ where: { lockedUntil: { gt: now } } }),
-          this.prisma.user.count({ where: { designation: 'TRAINEE' } }),
+          this.prisma.user.count({ where: { designation: { code: 'TRAINEE' } } }),
           this.prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
-          this.prisma.user.groupBy({
-            by: ['department'],
-            where: { department: { not: null } },
-            _count: { _all: true },
-          }),
+          this.getDepartmentBreakdown(),
         ]);
 
       return {
@@ -40,10 +48,7 @@ export class DashboardService {
           lockedAccounts,
           traineeCount,
           roleBreakdown: byRole.map((r) => ({ role: r.role, count: r._count._all })),
-          departmentBreakdown: byDepartment.map((d) => ({
-            department: d.department,
-            count: d._count._all,
-          })),
+          departmentBreakdown,
         },
       };
     }
@@ -53,15 +58,11 @@ export class DashboardService {
       user.role === UserRole.HR_EXECUTIVE ||
       user.role === UserRole.RECRUITER
     ) {
-      const [totalEmployees, activeEmployees, traineeCount, byDepartment] = await Promise.all([
+      const [totalEmployees, activeEmployees, traineeCount, departmentBreakdown] = await Promise.all([
         this.prisma.user.count(),
         this.prisma.user.count({ where: { isActive: true } }),
-        this.prisma.user.count({ where: { designation: 'TRAINEE' } }),
-        this.prisma.user.groupBy({
-          by: ['department'],
-          where: { department: { not: null } },
-          _count: { _all: true },
-        }),
+        this.prisma.user.count({ where: { designation: { code: 'TRAINEE' } } }),
+        this.getDepartmentBreakdown(),
       ]);
 
       return {
@@ -70,10 +71,7 @@ export class DashboardService {
           totalEmployees,
           activeEmployees,
           traineeCount,
-          departmentBreakdown: byDepartment.map((d) => ({
-            department: d.department,
-            count: d._count._all,
-          })),
+          departmentBreakdown,
         },
       };
     }
@@ -81,7 +79,7 @@ export class DashboardService {
     if (user.role === UserRole.FINANCE_MANAGER || user.role === UserRole.FINANCE_EXECUTIVE) {
       const [activePayrollHeadcount, traineeCount] = await Promise.all([
         this.prisma.user.count({ where: { isActive: true } }),
-        this.prisma.user.count({ where: { isActive: true, designation: 'TRAINEE' } }),
+        this.prisma.user.count({ where: { isActive: true, designation: { code: 'TRAINEE' } } }),
       ]);
 
       return {
@@ -109,9 +107,14 @@ export class DashboardService {
       };
     }
 
-    // Default: EMPLOYEE (tailored by designation)
-    const designation = user.designation ?? 'JUNIOR';
-    const leaveQuotaDays = LEAVE_QUOTA_BY_DESIGNATION[designation] ?? 18;
+    // Default: EMPLOYEE (tailored by designation from DB)
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.userId },
+      select: { designation: { select: { code: true, leaveQuota: true } } },
+    });
+
+    const designation = dbUser?.designation?.code ?? user.designation ?? 'JUNIOR';
+    const leaveQuotaDays = dbUser?.designation?.leaveQuota ?? 18;
 
     return {
       role: user.role,

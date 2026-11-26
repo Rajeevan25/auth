@@ -85,7 +85,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        designation: user.designation ?? undefined,
+        designation: user.designation?.code ?? undefined,
       },
       Boolean(data.rememberMe),
     );
@@ -96,8 +96,8 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        designation: user.designation ?? null,
-        department: user.department ?? null,
+        designation: user.designation?.code ?? null,
+        department: user.department?.name ?? null,
         createdAt: user.createdAt,
       },
       tokens,
@@ -132,8 +132,8 @@ export class AuthService {
       email: user.email,
       name: user.name,
       role: user.role,
-      designation: user.designation ?? null,
-      department: user.department ?? null,
+      designation: user.designation?.code ?? null,
+      department: user.department?.name ?? null,
       createdAt: user.createdAt,
     };
   }

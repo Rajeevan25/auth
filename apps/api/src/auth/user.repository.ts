@@ -1,20 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { User, UserRole, EmployeeDesignation } from '@prisma/client';
+import { User, UserRole, Designation, Department } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+
+export type UserWithOrg = User & {
+  designation: Pick<Designation, 'id' | 'code' | 'name' | 'leaveQuota'> | null;
+  department: Pick<Department, 'id' | 'code' | 'name'> | null;
+};
+
+const ORG_INCLUDE = {
+  designation: { select: { id: true, code: true, name: true, leaveQuota: true } },
+  department: { select: { id: true, code: true, name: true } },
+} as const;
 
 @Injectable()
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<UserWithOrg | null> {
     return this.prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
+      include: ORG_INCLUDE,
     });
   }
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: string): Promise<UserWithOrg | null> {
     return this.prisma.user.findUnique({
       where: { id },
+      include: ORG_INCLUDE,
     });
   }
 
@@ -23,22 +35,23 @@ export class UserRepository {
     name: string;
     passwordHash: string;
     role?: UserRole;
-    designation?: EmployeeDesignation;
-    department?: string;
+    designationId?: string;
+    departmentId?: string;
     managerId?: string;
-  }): Promise<User> {
+  }): Promise<UserWithOrg> {
     return this.prisma.user.create({
       data: {
         email: data.email.toLowerCase().trim(),
         name: data.name.trim(),
         passwordHash: data.passwordHash,
         role: data.role ?? UserRole.EMPLOYEE,
-        designation: data.designation ?? null,
-        department: data.department ?? null,
+        designationId: data.designationId ?? null,
+        departmentId: data.departmentId ?? null,
         managerId: data.managerId ?? null,
         failedAttempts: 0,
         lockedUntil: null,
       },
+      include: ORG_INCLUDE,
     });
   }
 

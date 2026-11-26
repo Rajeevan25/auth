@@ -6,6 +6,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { DesignationsModule } from './designations/designations.module';
+import { RolesModule } from './roles/roles.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { DashboardModule } from './dashboard/dashboard.module';
     HealthModule,
     AuthModule,
     DashboardModule,
+    DepartmentsModule,
+    DesignationsModule,
+    RolesModule,
+    UsersModule,
   ],
   providers: [
     {
