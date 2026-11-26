@@ -11,24 +11,29 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { authService } from '../services/auth.service';
-import { tokenService, REFRESH_COOKIE_NAME } from '../services/token.service';
+import { AuthService } from './auth.service';
+import { TokenService, REFRESH_COOKIE_NAME } from './token.service';
 import { AuthGuard, AuthenticatedRequest } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenService: TokenService,
+  ) {}
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() body: { email: string; password: string; rememberMe?: boolean },
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const result = await authService.login({
+    const result = await this.authService.login({
       email: body.email,
       password: body.password,
       rememberMe: body.rememberMe ?? false,
     });
-    tokenService.setAuthCookies(res as any, result.tokens);
+    this.tokenService.setAuthCookies(res, result.tokens);
 
     return {
       success: true,
@@ -44,8 +49,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
     const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    await authService.logout(rawRefreshToken);
-    tokenService.clearAuthCookies(res as any);
+    await this.authService.logout(rawRefreshToken);
+    this.tokenService.clearAuthCookies(res);
 
     return {
       success: true,
@@ -61,8 +66,8 @@ export class AuthController {
   ) {
     const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
     try {
-      const result = await authService.refresh(rawRefreshToken);
-      tokenService.setAuthCookies(res as any, result.newTokens);
+      const result = await this.authService.refresh(rawRefreshToken);
+      this.tokenService.setAuthCookies(res, result.newTokens);
 
       return {
         success: true,
@@ -70,7 +75,7 @@ export class AuthController {
         user: result.user,
       };
     } catch (error) {
-      tokenService.clearAuthCookies(res as any);
+      this.tokenService.clearAuthCookies(res);
       throw error;
     }
   }
@@ -82,7 +87,7 @@ export class AuthController {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    const user = await authService.getMe(req.user.userId);
+    const user = await this.authService.getMe(req.user.userId);
     return {
       success: true,
       user,
@@ -92,7 +97,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() body: { email: string }) {
-    const result = await authService.forgotPassword(body.email);
+    const result = await this.authService.forgotPassword(body.email);
     return {
       success: true,
       message: result.message,
@@ -102,7 +107,7 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() body: { token: string; password: string }) {
-    const result = await authService.resetPassword(body.token, body.password);
+    const result = await this.authService.resetPassword(body.token, body.password);
     return {
       success: true,
       message: result.message,

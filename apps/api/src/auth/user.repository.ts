@@ -1,21 +1,29 @@
-import { prisma } from '../config/db';
+import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
+@Injectable()
 export class UserRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
   async findByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
     });
   }
 
   async findById(id: string): Promise<User | null> {
-    return prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { id },
     });
   }
 
-  async createUser(data: { email: string; name: string; passwordHash: string }): Promise<User> {
-    return prisma.user.create({
+  async createUser(data: {
+    email: string;
+    name: string;
+    passwordHash: string;
+  }): Promise<User> {
+    return this.prisma.user.create({
       data: {
         email: data.email.toLowerCase().trim(),
         name: data.name.trim(),
@@ -27,7 +35,7 @@ export class UserRepository {
   }
 
   async incrementFailedAttempts(id: string): Promise<User> {
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id },
       data: {
         failedAttempts: { increment: 1 },
@@ -35,8 +43,12 @@ export class UserRepository {
     });
   }
 
-  async lockAccount(id: string, lockedUntil: Date, failedAttempts: number): Promise<User> {
-    return prisma.user.update({
+  async lockAccount(
+    id: string,
+    lockedUntil: Date,
+    failedAttempts: number,
+  ): Promise<User> {
+    return this.prisma.user.update({
       where: { id },
       data: {
         failedAttempts,
@@ -46,7 +58,7 @@ export class UserRepository {
   }
 
   async resetFailedAttempts(id: string): Promise<User> {
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id },
       data: {
         failedAttempts: 0,
@@ -56,7 +68,7 @@ export class UserRepository {
   }
 
   async updatePassword(id: string, passwordHash: string): Promise<User> {
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id },
       data: {
         passwordHash,
@@ -66,6 +78,3 @@ export class UserRepository {
     });
   }
 }
-
-export const userRepository = new UserRepository();
-

@@ -1,14 +1,17 @@
-import { prisma } from '../config/db';
+import { Injectable } from '@nestjs/common';
 import { RefreshToken, PasswordResetToken } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
+@Injectable()
 export class TokenRepository {
-  // Refresh Token operations
+  constructor(private readonly prisma: PrismaService) {}
+
   async createRefreshToken(data: {
     userId: string;
     tokenHash: string;
     expiresAt: Date;
   }): Promise<RefreshToken> {
-    return prisma.refreshToken.create({
+    return this.prisma.refreshToken.create({
       data: {
         userId: data.userId,
         tokenHash: data.tokenHash,
@@ -20,7 +23,7 @@ export class TokenRepository {
   async findRefreshTokenByHash(
     tokenHash: string,
   ): Promise<(RefreshToken & { user: { id: string; email: string; name: string } }) | null> {
-    return prisma.refreshToken.findUnique({
+    return this.prisma.refreshToken.findUnique({
       where: { tokenHash },
       include: {
         user: {
@@ -35,14 +38,14 @@ export class TokenRepository {
   }
 
   async revokeRefreshToken(id: string): Promise<RefreshToken> {
-    return prisma.refreshToken.update({
+    return this.prisma.refreshToken.update({
       where: { id },
       data: { revokedAt: new Date() },
     });
   }
 
   async revokeAllUserRefreshTokens(userId: string): Promise<{ count: number }> {
-    return prisma.refreshToken.updateMany({
+    return this.prisma.refreshToken.updateMany({
       where: {
         userId,
         revokedAt: null,
@@ -53,13 +56,12 @@ export class TokenRepository {
     });
   }
 
-  // Password Reset Token operations
   async createPasswordResetToken(data: {
     userId: string;
     tokenHash: string;
     expiresAt: Date;
   }): Promise<PasswordResetToken> {
-    return prisma.passwordResetToken.create({
+    return this.prisma.passwordResetToken.create({
       data: {
         userId: data.userId,
         tokenHash: data.tokenHash,
@@ -71,7 +73,7 @@ export class TokenRepository {
   async findPasswordResetTokenByHash(
     tokenHash: string,
   ): Promise<(PasswordResetToken & { user: { id: string; email: string } }) | null> {
-    return prisma.passwordResetToken.findUnique({
+    return this.prisma.passwordResetToken.findUnique({
       where: { tokenHash },
       include: {
         user: {
@@ -85,7 +87,7 @@ export class TokenRepository {
   }
 
   async markPasswordResetTokenUsed(id: string): Promise<PasswordResetToken> {
-    return prisma.passwordResetToken.update({
+    return this.prisma.passwordResetToken.update({
       where: { id },
       data: {
         usedAt: new Date(),
@@ -93,6 +95,3 @@ export class TokenRepository {
     });
   }
 }
-
-export const tokenRepository = new TokenRepository();
-

@@ -47,5 +47,5 @@ USER appuser
 EXPOSE 5000
 
 WORKDIR /app/apps/api
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/main.js"]
 

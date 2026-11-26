@@ -1,15 +1,13 @@
-import { userRepository } from '../repositories/user.repository';
-import { tokenRepository } from '../repositories/token.repository';
-import { tokenService } from './token.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { UserRepository } from './user.repository';
+import { TokenRepository } from './token.repository';
+import { TokenService } from './token.service';
 import {
   hashPassword,
   comparePassword,
   dummyComparePassword,
 } from '../utils/password.utils';
-import {
-  generateRandomToken,
-  hashToken,
-} from '../utils/token.utils';
+import { generateRandomToken, hashToken } from '../utils/token.utils';
 import {
   ConflictError,
   UnauthorizedError,
@@ -18,26 +16,34 @@ import {
   NotFoundError,
 } from '../utils/errors';
 import { env } from '../config/env.config';
-import { logger } from '../utils/logger';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
+@Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly userRepository: UserRepository,
+    private readonly tokenRepository: TokenRepository,
+  ) {}
+
   async register(data: { email: string; name: string; password: string }) {
-    const existing = await userRepository.findByEmail(data.email);
+    const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
       throw new ConflictError('An account with this email address already exists');
     }
 
     const passwordHash = await hashPassword(data.password);
-    const user = await userRepository.createUser({
+    const user = await this.userRepository.createUser({
       email: data.email,
       name: data.name,
       passwordHash,
     });
 
-    const tokens = await tokenService.issueTokens(
+    const tokens = await this.tokenService.issueTokens(
       { id: user.id, email: user.email, name: user.name },
       false,
     );
@@ -54,7 +60,7 @@ export class AuthService {
   }
 
   async login(data: { email: string; password: string; rememberMe?: boolean }) {
-    const user = await userRepository.findByEmail(data.email);
+    const user = await this.userRepository.findByEmail(data.email);
 
     // Timing attack mitigation: run dummy compare if user does not exist
     if (!user) {
@@ -64,7 +70,6 @@ export class AuthService {
 
     const now = new Date();
 
-    // Check account lockout status
     if (user.lockedUntil && user.lockedUntil > now) {
       const remainingSeconds = Math.ceil((user.lockedUntil.getTime() - now.getTime()) / 1000);
       throw new TooManyRequestsError(
@@ -73,7 +78,6 @@ export class AuthService {
       );
     }
 
-    // Check password
     const isPasswordValid = await comparePassword(data.password, user.passwordHash);
 
     if (!isPasswordValid) {
@@ -81,10 +85,9 @@ export class AuthService {
 
       if (updatedFailedAttempts >= MAX_FAILED_ATTEMPTS) {
         const lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
-        await userRepository.lockAccount(user.id, lockedUntil, updatedFailedAttempts);
-        logger.warn(
-          { userId: user.id, email: user.email },
-          'Account locked due to 5 consecutive failed login attempts',
+        await this.userRepository.lockAccount(user.id, lockedUntil, updatedFailedAttempts);
+        this.logger.warn(
+          `Account locked due to 5 consecutive failed login attempts (userId=${user.id}, email=${user.email})`,
         );
         throw new TooManyRequestsError(
           'Account is temporarily locked due to 5 failed login attempts. Please try again in 15 minutes.',
@@ -92,17 +95,15 @@ export class AuthService {
         );
       }
 
-      await userRepository.incrementFailedAttempts(user.id);
+      await this.userRepository.incrementFailedAttempts(user.id);
       throw new UnauthorizedError('Invalid email or password');
     }
 
-    // Reset failed attempts upon successful password match
     if (user.failedAttempts > 0 || user.lockedUntil) {
-      await userRepository.resetFailedAttempts(user.id);
+      await this.userRepository.resetFailedAttempts(user.id);
     }
 
-    // Issue tokens with rememberMe lifetime preference
-    const tokens = await tokenService.issueTokens(
+    const tokens = await this.tokenService.issueTokens(
       { id: user.id, email: user.email, name: user.name },
       Boolean(data.rememberMe),
     );
@@ -121,9 +122,9 @@ export class AuthService {
   async logout(rawRefreshToken?: string) {
     if (rawRefreshToken) {
       const tokenHash = hashToken(rawRefreshToken);
-      const record = await tokenRepository.findRefreshTokenByHash(tokenHash);
+      const record = await this.tokenRepository.findRefreshTokenByHash(tokenHash);
       if (record) {
-        await tokenRepository.revokeRefreshToken(record.id);
+        await this.tokenRepository.revokeRefreshToken(record.id);
       }
     }
   }
@@ -132,11 +133,11 @@ export class AuthService {
     if (!rawRefreshToken) {
       throw new UnauthorizedError('Refresh token missing');
     }
-    return tokenService.rotateRefreshToken(rawRefreshToken);
+    return this.tokenService.rotateRefreshToken(rawRefreshToken);
   }
 
   async getMe(userId: string) {
-    const user = await userRepository.findById(userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError('User not found');
     }
@@ -150,7 +151,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await userRepository.findByEmail(email);
+    const user = await this.userRepository.findByEmail(email);
 
     // Prevent user enumeration: always return same message regardless of whether user exists
     if (user) {
@@ -160,7 +161,7 @@ export class AuthService {
         Date.now() + env.PASSWORD_RESET_EXPIRATION_MINUTES * 60 * 1000,
       );
 
-      await tokenRepository.createPasswordResetToken({
+      await this.tokenRepository.createPasswordResetToken({
         userId: user.id,
         tokenHash,
         expiresAt,
@@ -168,13 +169,9 @@ export class AuthService {
 
       const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${rawResetToken}`;
 
-      // In development / demo mode, print reset link to console
-      logger.info(
+      this.logger.log(
         `\n=========================================\n[DEV AUTH NOTIFICATION]\nPassword reset requested for: ${user.email}\nReset Link: ${resetUrl}\nExpires in: ${env.PASSWORD_RESET_EXPIRATION_MINUTES} minutes\n=========================================\n`,
       );
-
-      // TODO: Integrate production mailer service (e.g. Resend, SendGrid, Postmark, AWS SES)
-      // await mailService.sendPasswordResetEmail({ to: user.email, resetUrl });
     }
 
     return {
@@ -185,7 +182,7 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string) {
     const tokenHash = hashToken(token);
-    const resetRecord = await tokenRepository.findPasswordResetTokenByHash(tokenHash);
+    const resetRecord = await this.tokenRepository.findPasswordResetTokenByHash(tokenHash);
 
     if (!resetRecord || resetRecord.usedAt || new Date() > resetRecord.expiresAt) {
       throw new BadRequestError('Invalid or expired password reset token');
@@ -193,22 +190,14 @@ export class AuthService {
 
     const passwordHash = await hashPassword(newPassword);
 
-    // Update password and reset lockout flags
-    await userRepository.updatePassword(resetRecord.userId, passwordHash);
+    await this.userRepository.updatePassword(resetRecord.userId, passwordHash);
+    await this.tokenRepository.markPasswordResetTokenUsed(resetRecord.id);
+    await this.tokenRepository.revokeAllUserRefreshTokens(resetRecord.userId);
 
-    // Mark reset token as used
-    await tokenRepository.markPasswordResetTokenUsed(resetRecord.id);
-
-    // Revoke all existing sessions so old tokens cannot be used after password change
-    await tokenRepository.revokeAllUserRefreshTokens(resetRecord.userId);
-
-    logger.info({ userId: resetRecord.userId }, 'Password reset successfully completed');
+    this.logger.log(`Password reset successfully completed (userId=${resetRecord.userId})`);
 
     return {
       message: 'Password has been reset successfully. You can now log in with your new password.',
     };
   }
 }
-
-export const authService = new AuthService();
-

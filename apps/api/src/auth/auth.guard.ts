@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 import { verifyAccessToken, AccessTokenPayload } from '../utils/token.utils';
-import { ACCESS_COOKIE_NAME } from '../services/token.service';
+import { ACCESS_COOKIE_NAME } from './token.service';
 
 export interface AuthenticatedRequest extends FastifyRequest {
   user?: AccessTokenPayload;
