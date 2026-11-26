@@ -74,6 +74,11 @@ export class AuthService {
       await this.userRepository.resetFailedAttempts(user.id);
     }
 
+    if (!user.isActive) {
+      this.logger.warn(`Login blocked for deactivated account (userId=${user.id}, email=${user.email})`);
+      throw new UnauthorizedError('Your account has been deactivated. Contact HR or Admin.');
+    }
+
     const tokens = await this.tokenService.issueTokens(
       {
         id: user.id,

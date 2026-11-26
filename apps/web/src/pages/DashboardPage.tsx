@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { ShieldCheck, User, Calendar, Key, CheckCircle, RefreshCw, Server, Lock } from 'lucide-react';
+import { ShieldCheck, User, Calendar, CheckCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { DashboardNavbar } from '../components/layout/DashboardNavbar';
+import { Sidebar } from '../components/layout/Sidebar';
+import { RoleWidgets, getLeaveQuota } from '../components/dashboard/RoleWidgets';
 import { apiClient } from '../lib/api';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
@@ -9,6 +11,7 @@ export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [testResult, setTestResult] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const formattedDate = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-US', {
@@ -33,9 +36,12 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
-      <DashboardNavbar />
+      <DashboardNavbar onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-4 space-y-6 animate-fade-in">
+      <div className="flex flex-1">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 space-y-6 animate-fade-in">
         {/* Welcome Banner */}
         <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-700 to-cyan-800 text-white shadow-xl shadow-brand-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -116,7 +122,16 @@ export const DashboardPage: React.FC = () => {
               </div>
               <div>
                 <dt className="text-slate-500 dark:text-slate-400">Department</dt>
-                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">Unassigned</dd>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">
+                  {user?.department || 'Unassigned'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500 dark:text-slate-400">Role / Level</dt>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">
+                  {user?.role || 'EMPLOYEE'}
+                  {user?.designation ? ` (${user.designation})` : ''}
+                </dd>
               </div>
               <div>
                 <dt className="text-slate-500 dark:text-slate-400">Employment Status</dt>
@@ -144,7 +159,9 @@ export const DashboardPage: React.FC = () => {
               </div>
               <div>
                 <dt className="text-slate-500 dark:text-slate-400">Leave Balance</dt>
-                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">15 Days Remaining</dd>
+                <dd className="font-semibold text-slate-900 dark:text-white mt-0.5">
+                  {getLeaveQuota(user?.role, user?.designation)}
+                </dd>
               </div>
               <div>
                 <dt className="text-slate-500 dark:text-slate-400">Work Location</dt>
@@ -154,65 +171,10 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Architectural Overview Card for Developers */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
-              <Server className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="font-bold text-lg text-slate-900 dark:text-white">
-                HRM Modules & Quick Guide
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Core human resource workflows available in your workspace
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Lock className="w-4 h-4 text-brand-500" />
-                1. Employee Directory
-              </div>
-              <p>
-                Maintain centralized employee profiles, job titles, reporting managers, and department assignments in one searchable directory.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-brand-500" />
-                2. Attendance & Time Tracking
-              </div>
-              <p>
-                Track daily clock-in and clock-out logs, shift schedules, and attendance summaries across teams.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Key className="w-4 h-4 text-brand-500" />
-                3. Leave & Time-Off Management
-              </div>
-              <p>
-                Submit leave requests, monitor remaining annual and sick leave balances, and streamline manager approvals.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-brand-500" />
-                4. Role-Based Access Control
-              </div>
-              <p>
-                Protect sensitive HR and payroll data with role-based permissions for Admins, HR Managers, Team Leads, and Employees.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Role-Specific Workspace Widgets */}
+        <RoleWidgets role={user?.role} designation={user?.designation} />
       </main>
+      </div>
     </div>
   );
 };
