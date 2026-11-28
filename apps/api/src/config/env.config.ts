@@ -16,6 +16,11 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRATION_DAYS: z.string().default('7').transform(Number),
   JWT_REFRESH_REMEMBER_ME_DAYS: z.string().default('30').transform(Number),
   PASSWORD_RESET_EXPIRATION_MINUTES: z.string().default('60').transform(Number),
+  MAIL_HOST: z.string().optional(),
+  MAIL_PORT: z.string().default('587').transform(Number),
+  MAIL_USERNAME: z.string().optional(),
+  MAIL_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

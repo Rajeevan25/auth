@@ -31,7 +31,7 @@ export const userProfileSchema = z.object({
 export const createUserSchema = z.object({
   email: z.string().trim().email('Invalid email address'),
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128).optional(),
   role: z.nativeEnum(UserRole).default(UserRole.EMPLOYEE),
   departmentId: z.string().uuid('Invalid departmentId').optional().nullable(),
   designationId: z.string().uuid('Invalid designationId').optional().nullable(),

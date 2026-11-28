@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import crypto from 'crypto';
+import { Injectable, Optional } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   BadRequestError,
@@ -23,7 +25,24 @@ export class UsersService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly prisma: PrismaService,
+    @Optional() private readonly mailService?: MailService,
   ) {}
+
+  private generateTempPassword(): string {
+    const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lower = 'abcdefghijkmnopqrstuvwxyz';
+    const digits = '23456789';
+    const all = upper + lower + digits;
+    const pick = (chars: string) => chars[crypto.randomInt(chars.length)];
+    const chars = [pick(upper), pick(lower), pick(digits)];
+    for (let i = 0; i < 7; i++) chars.push(pick(all));
+    // Shuffle
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = crypto.randomInt(i + 1);
+      [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+    return chars.join('');
+  }
 
   private assertCanManageRole(actorRole: string, targetRole: UserRole) {
     if (actorRole === UserRole.SUPER_ADMIN) {
@@ -155,9 +174,10 @@ export class UsersService {
       managerId: dto.managerId,
     });
 
-    const passwordHash = await hashPassword(dto.password);
+    const rawTempPassword = dto.password || this.generateTempPassword();
+    const passwordHash = await hashPassword(rawTempPassword);
 
-    return this.usersRepository.createWithProfile({
+    const created = await this.usersRepository.createWithProfile({
       email: dto.email,
       name: dto.name,
       passwordHash,
@@ -167,6 +187,25 @@ export class UsersService {
       managerId: dto.managerId,
       profile: dto.profile,
     });
+
+    const recipientEmail = dto.profile?.personalEmail || created.email;
+    const inviteSent = this.mailService
+      ? await this.mailService.sendEmployeeInvite({
+          to: recipientEmail,
+          name: created.name,
+          workEmail: created.email,
+          tempPassword: rawTempPassword,
+        })
+      : false;
+
+    return {
+      ...created,
+      inviteMeta: {
+        inviteSent,
+        sentTo: recipientEmail,
+        tempPassword: rawTempPassword,
+      },
+    };
   }
 
   async update(actorRole: string, targetUserId: string, dto: UpdateUserDto) {

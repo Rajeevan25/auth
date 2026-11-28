@@ -117,11 +117,14 @@ export class UsersController {
     @Req() req: AuthenticatedRequest,
     @Body(new ZodValidationPipe(createUserSchema)) body: CreateUserDto,
   ) {
-    const user = await this.usersService.create(req.user?.role ?? '', body);
+    const { inviteMeta, ...user } = await this.usersService.create(req.user?.role ?? '', body);
     return {
       success: true,
-      message: 'User created successfully',
+      message: inviteMeta?.inviteSent
+        ? `User created and invite email sent to ${inviteMeta.sentTo}`
+        : 'User created successfully',
       user,
+      ...inviteMeta,
     };
   }
 

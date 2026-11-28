@@ -42,13 +42,21 @@ export const getUserById = (id: string) =>
 export const createUser = (data: {
   name: string;
   email: string;
-  password: string;
+  password?: string;
   role: UserRole;
   departmentId?: string | null;
   designationId?: string | null;
   managerId?: string | null;
   profile?: Partial<UserProfile>;
-}) => apiClient.post<{ success: boolean; user: User }>('/users', data);
+}) =>
+  apiClient.post<{
+    success: boolean;
+    message: string;
+    user: User;
+    inviteSent: boolean;
+    sentTo: string;
+    tempPassword: string;
+  }>('/users', data);
 
 export const updateUser = (
   id: string,

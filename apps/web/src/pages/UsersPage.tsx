@@ -56,8 +56,15 @@ const inputClass =
 // ─── Create User Schema ───────────────────────────────────────────────────────
 const createUserSchema = z.object({
   name: z.string().min(2, 'Name required'),
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Min 8 characters').regex(/[A-Z]/, 'Need uppercase').regex(/[a-z]/, 'Need lowercase').regex(/[0-9]/, 'Need number'),
+  email: z.string().email('Invalid work email'),
+  personalEmail: z.string().email('Invalid personal email').optional().or(z.literal('')),
+  password: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || (val.length >= 8 && /[A-Z]/.test(val) && /[a-z]/.test(val) && /[0-9]/.test(val)),
+      'Min 8 chars with uppercase, lowercase, and number',
+    ),
   role: z.string().min(1, 'Role required') as z.ZodType<UserRole>,
   departmentId: z.string().optional().nullable(),
   designationId: z.string().optional().nullable(),
@@ -120,7 +127,11 @@ function Modal({
 function CreateUserModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [showPass, setShowPass] = useState(false);
-  const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+  const [createdResult, setCreatedResult] = useState<{
+    tempPassword: string;
+    inviteSent: boolean;
+    sentTo: string;
+  } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const { data: depts } = useQuery({
@@ -148,20 +159,29 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
   } = useForm<CreateUserForm>({ resolver: zodResolver(createUserSchema) });
 
   const mutation = useMutation({
-    mutationFn: (data: CreateUserForm) =>
-      createUser({
+    mutationFn: (data: CreateUserForm) => {
+      const profile: Record<string, string> = {};
+      if (data.employeeCode) profile.employeeCode = data.employeeCode;
+      if (data.personalEmail) profile.personalEmail = data.personalEmail;
+
+      return createUser({
         name: data.name,
         email: data.email,
-        password: data.password,
+        password: data.password || undefined,
         role: data.role,
         departmentId: data.departmentId || null,
         designationId: data.designationId || null,
         managerId: data.managerId || null,
-        profile: data.employeeCode ? { employeeCode: data.employeeCode } : undefined,
-      }),
-    onSuccess: (_, variables) => {
+        profile: Object.keys(profile).length > 0 ? profile : undefined,
+      });
+    },
+    onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['users'] });
-      setCreatedPassword(variables.password);
+      setCreatedResult({
+        tempPassword: res.data.tempPassword,
+        inviteSent: res.data.inviteSent,
+        sentTo: res.data.sentTo,
+      });
     },
   });
 
@@ -171,29 +191,45 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (createdPassword) {
+  if (createdResult) {
     return (
       <Modal title="User Created Successfully" onClose={onClose}>
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
-                  Save this temporary password now
-                </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                  Share it with the employee securely. They will be forced to change it on first
-                  login.
-                </p>
+          {createdResult.inviteSent ? (
+            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+                    Invite email sent to {createdResult.sentTo}
+                  </p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                    The employee received their username and temporary password, and will be forced
+                    to change it on first login.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+                    Email could not be sent — share this temporary password manually
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    They will be forced to change it on first login.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-sm">
-            <span className="flex-1 break-all">{createdPassword}</span>
+            <span className="flex-1 break-all">{createdResult.tempPassword}</span>
             <button
               type="button"
-              onClick={() => copyToClipboard(createdPassword)}
+              onClick={() => copyToClipboard(createdResult.tempPassword)}
               className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-brand-600 hover:bg-white dark:hover:bg-slate-700 transition"
             >
               {copied ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -227,18 +263,28 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
         <FormField label="Full Name *" error={errors.name?.message}>
           <input className={inputClass} {...register('name')} placeholder="John Doe" />
         </FormField>
-        <FormField label="Work Email *" error={errors.email?.message}>
+        <FormField label="Work Email (Login) *" error={errors.email?.message}>
           <input className={inputClass} {...register('email')} placeholder="john@company.com" />
         </FormField>
 
         <div className="sm:col-span-2">
-          <FormField label="Temporary Password *" error={errors.password?.message}>
+          <FormField label="Personal Email (for Invite)" error={errors.personalEmail?.message}>
+            <input
+              className={inputClass}
+              {...register('personalEmail')}
+              placeholder="john.personal@gmail.com (falls back to Work Email if blank)"
+            />
+          </FormField>
+        </div>
+
+        <div className="sm:col-span-2">
+          <FormField label="Temporary Password (optional)" error={errors.password?.message}>
             <div className="relative">
               <input
                 type={showPass ? 'text' : 'password'}
                 className={`${inputClass} pr-10`}
                 {...register('password')}
-                placeholder="Min 8 chars, upper + lower + number"
+                placeholder="Leave blank to auto-generate a secure password"
               />
               <button
                 type="button"

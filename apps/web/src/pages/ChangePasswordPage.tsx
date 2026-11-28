@@ -29,12 +29,10 @@ const schema = z
 
 type FormData = z.infer<typeof schema>;
 
-function PasswordInput({
-  label,
-  id,
-  error,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; id: string; error?: string }) {
+const PasswordInput = React.forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> & { label: string; id: string; error?: string }
+>(({ label, id, error, ...props }, ref) => {
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-1">
@@ -43,6 +41,7 @@ function PasswordInput({
       </label>
       <div className="relative">
         <input
+          ref={ref}
           id={id}
           type={show ? 'text' : 'password'}
           className={`w-full px-3 py-2.5 pr-10 rounded-xl border text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition focus:ring-2 focus:ring-brand-500 ${
@@ -64,7 +63,8 @@ function PasswordInput({
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
-}
+});
+PasswordInput.displayName = 'PasswordInput';
 
 export const ChangePasswordPage: React.FC = () => {
   const navigate = useNavigate();
