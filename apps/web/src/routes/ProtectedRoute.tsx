@@ -4,8 +4,6 @@ import { useAuth } from '../hooks/useAuth';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 interface ProtectedRouteProps {
-  /** If provided, only users whose role is in this list can access this route.
-   *  If omitted, any authenticated user can access. */
   allowedRoles?: string[];
 }
 
@@ -28,7 +26,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Role check: if allowedRoles is set, verify current user's role
+  // Force password change – block all other routes
+  if (user?.mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
+  }
+
   if (allowedRoles && allowedRoles.length > 0 && user) {
     if (!allowedRoles.includes(user.role)) {
       return <Navigate to="/unauthorized" replace />;
@@ -37,4 +39,3 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
 
   return <Outlet />;
 };
-

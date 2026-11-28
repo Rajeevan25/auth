@@ -12,6 +12,7 @@ export const USER_SAFE_SELECT = {
   designationId: true,
   managerId: true,
   isActive: true,
+  mustChangePassword: true,
   failedAttempts: true,
   lockedUntil: true,
   createdAt: true,
@@ -135,6 +136,7 @@ export class UsersRepository {
         departmentId: data.departmentId ?? null,
         designationId: data.designationId ?? null,
         managerId: data.managerId ?? null,
+        mustChangePassword: true,
         profile: {
           create: data.profile ?? {},
         },

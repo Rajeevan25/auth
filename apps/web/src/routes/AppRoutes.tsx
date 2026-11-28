@@ -4,6 +4,11 @@ import { LoginPage } from '../pages/LoginPage';
 import { ForgotPasswordPage } from '../pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '../pages/ResetPasswordPage';
 import { DashboardPage } from '../pages/DashboardPage';
+import { ChangePasswordPage } from '../pages/ChangePasswordPage';
+import { MyProfilePage } from '../pages/MyProfilePage';
+import { UsersPage } from '../pages/UsersPage';
+import { DepartmentsPage } from '../pages/DepartmentsPage';
+import { DesignationsPage } from '../pages/DesignationsPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
@@ -24,6 +29,29 @@ export const AppRoutes: React.FC = () => {
       {/* ── Protected Routes: any authenticated user ─────────────────────── */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
+        <Route path="/profile" element={<MyProfilePage />} />
+        <Route path="/departments" element={<DepartmentsPage />} />
+        <Route path="/designations" element={<DesignationsPage />} />
+      </Route>
+
+      {/* ── Users / Employee Directory ────────────────────────────────────── */}
+      <Route
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              'SUPER_ADMIN',
+              'ADMIN',
+              'HR_MANAGER',
+              'HR_EXECUTIVE',
+              'RECRUITER',
+              'MANAGER',
+              'TEAM_LEAD',
+            ]}
+          />
+        }
+      >
+        <Route path="/users" element={<UsersPage />} />
       </Route>
 
       {/* ── Super Admin ───────────────────────────────────────────────────── */}

@@ -15,6 +15,8 @@ import {
   TrendingUp,
   Shield,
   Settings,
+  Building2,
+  Award,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -43,10 +45,31 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
     title: 'My Space',
     items: [
       { label: 'My Dashboard', to: '/employee/dashboard', icon: LayoutDashboard },
-      { label: 'My Profile', to: '/employee/profile', icon: User },
+      { label: 'My Profile', to: '/profile', icon: User },
       { label: 'My Leave', to: '/employee/leave', icon: Calendar },
       { label: 'Timesheet', to: '/employee/timesheet', icon: Clock },
       { label: 'Payslips', to: '/employee/payslip', icon: FileText },
+    ],
+  },
+  {
+    title: 'Organization',
+    items: [
+      {
+        label: 'Employees',
+        to: '/users',
+        icon: Users,
+        roles: [
+          'SUPER_ADMIN',
+          'ADMIN',
+          'HR_MANAGER',
+          'HR_EXECUTIVE',
+          'RECRUITER',
+          'MANAGER',
+          'TEAM_LEAD',
+        ],
+      },
+      { label: 'Departments', to: '/departments', icon: Building2 },
+      { label: 'Designations', to: '/designations', icon: Award },
     ],
   },
   {

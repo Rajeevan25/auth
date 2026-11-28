@@ -18,6 +18,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { loginSchema, LoginDto } from './dto/login.dto';
 import { forgotPasswordSchema, ForgotPasswordDto } from './dto/forgot-password.dto';
 import { resetPasswordSchema, ResetPasswordDto } from './dto/reset-password.dto';
+import { changePasswordSchema, ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -120,6 +121,22 @@ export class AuthController {
       success: true,
       message: result.message,
     };
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @Req() req: AuthenticatedRequest,
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordDto,
+  ) {
+    if (!req.user?.userId) throw new UnauthorizedException('Unauthorized');
+    const result = await this.authService.changePassword(
+      req.user.userId,
+      body.currentPassword,
+      body.newPassword,
+    );
+    return { success: true, message: result.message };
   }
 
   @Get('oauth/google')

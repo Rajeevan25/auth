@@ -6,8 +6,9 @@ export interface User {
   email: string;
   name: string;
   role: string;
-  designation: string | null; // only set when role = 'EMPLOYEE'
+  designation: string | null;
   department: string | null;
+  mustChangePassword: boolean;
   createdAt: string;
 }
 

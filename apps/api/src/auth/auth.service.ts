@@ -98,6 +98,7 @@ export class AuthService {
         role: user.role,
         designation: user.designation?.code ?? null,
         department: user.department?.name ?? null,
+        mustChangePassword: user.mustChangePassword,
         createdAt: user.createdAt,
       },
       tokens,
@@ -134,6 +135,7 @@ export class AuthService {
       role: user.role,
       designation: user.designation?.code ?? null,
       department: user.department?.name ?? null,
+      mustChangePassword: user.mustChangePassword,
       createdAt: user.createdAt,
     };
   }
@@ -186,6 +188,28 @@ export class AuthService {
 
     return {
       message: 'Password has been reset successfully. You can now log in with your new password.',
+    };
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    const isValid = await comparePassword(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new BadRequestError('Current password is incorrect');
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    await this.userRepository.updatePassword(userId, passwordHash);
+    await this.tokenRepository.revokeAllUserRefreshTokens(userId);
+
+    this.logger.log(`Password changed successfully (userId=${userId})`);
+
+    return {
+      message: 'Password changed successfully. Please log in again with your new password.',
     };
   }
 }

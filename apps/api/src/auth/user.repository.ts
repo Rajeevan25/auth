@@ -88,14 +88,16 @@ export class UserRepository {
     });
   }
 
-  async updatePassword(id: string, passwordHash: string): Promise<User> {
+  async updatePassword(id: string, passwordHash: string): Promise<UserWithOrg> {
     return this.prisma.user.update({
       where: { id },
       data: {
         passwordHash,
         failedAttempts: 0,
         lockedUntil: null,
+        mustChangePassword: false,
       },
+      include: ORG_INCLUDE,
     });
   }
 }
